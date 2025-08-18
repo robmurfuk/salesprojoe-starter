@@ -44,6 +44,7 @@
       <form id="form">
         <input id="input" type="text" placeholder="Ask me anything…" autocomplete="off" />
         <button id="send" type="submit">Send</button>
+        <button id="mic" type="button" title="Speak">🎤</button>
       </form>
     </div>
   </div>
@@ -98,6 +99,47 @@
         window.speechSynthesis.speak(u);
       } catch(_) {}
     }
+    // --- Voice input (mic button) ---
+let recognizing = false;
+let rec;
+
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+if (SpeechRecognition) {
+  rec = new SpeechRecognition();
+  rec.lang = 'en-GB';
+  rec.interimResults = false;
+  rec.maxAlternatives = 1;
+
+  rec.onresult = (e) => {
+    const said = e.results[0][0].transcript;
+    input.value = said;
+    form.requestSubmit(); // send automatically
+  };
+  rec.onend = () => { recognizing = false; setMic(false); };
+}
+
+const micBtn = document.getElementById('mic');
+function setMic(active){ 
+  if(!micBtn) return; 
+  micBtn.disabled = !SpeechRecognition; 
+  micBtn.textContent = active ? '🛑' : '🎤'; 
+}
+setMic(false);
+
+if (micBtn && SpeechRecognition) {
+  micBtn.addEventListener('click', () => {
+    if (recognizing) { rec.stop(); return; }
+    recognizing = true;
+    setMic(true);
+    try { window.speechSynthesis.cancel(); } catch(_) {}
+    rec.start();
+  });
+} else if (micBtn) {
+  micBtn.title = "Speech recognition not supported in this browser.";
+  micBtn.disabled = true;
+}
+
   </script>
 </body>
 </html>
